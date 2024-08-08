@@ -19,7 +19,7 @@ function sleep(time) {
     })
 
     await page.goto('https://edhrec.com/decks/' + commanderName, {
-        waitUntil: 'networkidle0'
+        waitUntil: 'networkidle2'
     })
 
     // TODO : Get all decklist tags in the page
@@ -54,20 +54,46 @@ function sleep(time) {
 
     });
 
-    console.log('Table headers:', tableData.headers)
-    console.log('Table content:', tableData.data)
+    //console.log('Table headers:', tableData.headers)
+    //console.log('Table content:', tableData.data[0])
     
 
     // TODO : Go through all of them and get the decklist
-    
+
+    let cardLists = [];
+
+    console.log("On entre");
+
+    for (index in tableData.data) {
+        const row = tableData.data[index]
+
+        await page.goto(row[0], {
+            waitUntil: 'load'
+        })
+
+        await page.click('xpath=/html/body/div/main/div[1]/div[3]/div/div[1]/div[2]/div/div[2]/a')
+
+        await sleep(10000);
+
+        const gridData = await page.evaluate(() => {
+            
+            /*
+            const cards = document.querySelectorAll('.CardImage_container__4_PKo');
+
+            return Array.from(cards).map(card => card.firstChild.firstChild.alt);*/
+
+        })
+
+        cardLists.push(gridData);
+
+    }
+
+    console.log(cardLists)
     
     // TODO : go to next page X times
 
 
     // TODO : save in json format
-
-    await sleep(25000);
-
 
     await browser.close();
 })();
