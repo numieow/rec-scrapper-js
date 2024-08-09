@@ -20,7 +20,11 @@ function sleep(time) {
 
     await page.goto('https://edhrec.com/decks/' + commanderName, {
         waitUntil: 'networkidle2'
-    })
+    });
+
+
+    //Clicking on the cookies button
+    await page.click("xpath=/html/body/div[2]/div/div[2]/div[3]/div/div[2]");
 
     // TODO : Get all decklist tags in the page
 
@@ -62,25 +66,41 @@ function sleep(time) {
 
     let cardLists = [];
 
-    console.log("On entre");
-
     for (index in tableData.data) {
         const row = tableData.data[index]
 
         await page.goto(row[0], {
-            waitUntil: 'load'
-        })
+            waitUntil: ['load', 'networkidle2']
+        });
 
-        await page.click('xpath=/html/body/div/main/div[1]/div[3]/div/div[1]/div[2]/div/div[2]/a')
+        console.log(index + " => Loaded");
 
-        await sleep(10000);
+        //Click on the Table View button
+        await page.click('xpath=/html/body/div/main/div[1]/div[3]/div/div[1]/div[2]/div/div[2]/a');
+
+        //Waiting for the table to show up
+        await page.waitForSelector('#__next > main > div.w-100 > div.mvCardList > div > div.CardLists_body__kQlpk > div > div.react-bootstrap-table > table')
+
+        //await page.waitForSelector("table");
+        console.log("YOOOO");
 
         const gridData = await page.evaluate(() => {
             
-            /*
-            const cards = document.querySelectorAll('.CardImage_container__4_PKo');
+            const cardTable = document.querySelector('html body div#__next main.d-flex.flex-grow-1.p-3.pe-lg-0 div.w-100 div.mvCardList div.CardLists_container__Z8WYp.shadow-sm.card div.CardLists_body__kQlpk div.TableView_table__OBAzB div.react-bootstrap-table table.table.table-hover.table-bordered');
+            
+            const cardRows = cardTable.querySelectorAll('tr');
+            //const cardHeaders = Array.from(cardRows[0].querySelectorAll('th')).map(th => th.textContent.trim());
 
-            return Array.from(cards).map(card => card.firstChild.firstChild.alt);*/
+            const decklist = Array.from(cardRows).slice(1).map(row => {
+                const cells = row.querySelectorAll('td');
+                return Array.from(cells).map(cell => {
+                    if (cell.cellIndex == 3) {
+                        return cell.firstChild.textContent;
+                    }
+                });
+            });
+
+            return decklist.flat().filter((ele) => typeof ele === "string");
 
         })
 
@@ -88,7 +108,7 @@ function sleep(time) {
 
     }
 
-    console.log(cardLists)
+    console.log(cardLists[0]);
     
     // TODO : go to next page X times
 
