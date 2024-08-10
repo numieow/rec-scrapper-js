@@ -1,3 +1,5 @@
+import { writeFileSync } from 'fs';
+
 const puppeteer = require('puppeteer');
 
 const commanderName = "ghave-guru-of-spores";
@@ -6,16 +8,35 @@ let deckNumber = 0;
 let loopsTimeTally = 0;
 const nextButtonXPath = "/html/body/div/main/div[1]/div[3]/div/div/div[3]/ul/li[7]/a";
 
+/**
+ * Makes the program halt for time ms (mostly for testing purposes)
+ * @param {int} time : the time of the sleep in ms
+ * @returns A Promise that will take time ms to realise
+ */
 function sleep(time) {
     return new Promise(resolve => setTimeout(resolve, time));
 }
 
-(async () => {
+/**
+ * Will save the json file created by the bot to the file system
+ * @param {JSON} obj : the obj to save to the file system
+ * @param {string} filename : the name we want to save this in
+ */
+const JSONToFile = (obj, filename) => {
+    writeFileSync(`${filename}.json`, JSON.stringify(obj, null, 2));
+}
+
+/**
+ * Processing function of the bot. Will fetch the data of decks for the wanted commander, for future "analysis"
+ * @param {int} numberOfNext : the number of time the "Next" button will be clicked on (aka the total number of decks seen will be 10 * numberOfNext)
+ */
+async function processing(numberOfNext) {
     
     const botStart = Date.now();
+    let cardLists = [];
 
     const browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
     });
 
     const page = await browser.newPage();
@@ -32,7 +53,6 @@ function sleep(time) {
     //Clicking on the cookies button
     await page.click("xpath=/html/body/div[2]/div/div[2]/div[3]/div/div[2]");
 
-    // TODO : Get all decklist tags in the page
 
     await page.waitForSelector('table');
 
@@ -66,14 +86,6 @@ function sleep(time) {
         };
 
     });
-
-    //console.log('Table headers:', tableData.headers)
-    //console.log('Table content:', tableData.data[0])
-    
-
-    // TODO : Go through all of them and get the decklist
-
-    let cardLists = [];
 
     // Goes through every deck in the home page and retrieves the decklist
     for (index in tableData.data) {
@@ -130,11 +142,12 @@ function sleep(time) {
     console.log(`Mean time to process a decklist: ${loopsTimeTally/deckNumber} ms`);
     console.log(`Total process time : ${botEnd - botStart} ms`);
 
-    
-    // TODO : go to next page X times
+    // TODO : go to next page X times by going back to decks and clicking on the Next button
 
 
     // TODO : save in json format
 
     await browser.close();
-})();
+};
+
+processing(0);
