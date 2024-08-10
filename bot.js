@@ -1,12 +1,18 @@
 const puppeteer = require('puppeteer');
 
-const commanderName = "ghave-guru-of-spores"
+const commanderName = "ghave-guru-of-spores";
+let botTimeTally = 0;
+let deckNumber = 0;
+let loopsTimeTally = 0;
+const nextButtonXPath = "/html/body/div/main/div[1]/div[3]/div/div/div[3]/ul/li[7]/a";
 
 function sleep(time) {
     return new Promise(resolve => setTimeout(resolve, time));
 }
 
 (async () => {
+    
+    const botStart = Date.now();
 
     const browser = await puppeteer.launch({
         headless: false,
@@ -31,7 +37,10 @@ function sleep(time) {
     await page.waitForSelector('table');
 
     /**
-     * Get the content of the table with the list of decks
+     * The content of the table with the list of decks
+     * 
+     * @attribute tableData.headers = Headers of the table
+     * @attribute tableData.data = Rows : link to the decklist and decklist info
      */
     const tableData = await page.evaluate(() => {
 
@@ -66,14 +75,18 @@ function sleep(time) {
 
     let cardLists = [];
 
+    // Goes through every deck in the home page and retrieves the decklist
     for (index in tableData.data) {
+
+        const loopStart = Date.now();
         const row = tableData.data[index]
 
         await page.goto(row[0], {
-            waitUntil: ['load', 'networkidle2']
+            waitUntil: ['networkidle0']
         });
 
-        console.log(index + " => Loaded");
+        deckNumber++;
+        console.log("Deck n°" + deckNumber + " => Loaded");
 
         //Click on the Table View button
         await page.click('xpath=/html/body/div/main/div[1]/div[3]/div/div[1]/div[2]/div/div[2]/a');
@@ -82,7 +95,6 @@ function sleep(time) {
         await page.waitForSelector('#__next > main > div.w-100 > div.mvCardList > div > div.CardLists_body__kQlpk > div > div.react-bootstrap-table > table')
 
         //await page.waitForSelector("table");
-        console.log("YOOOO");
 
         const gridData = await page.evaluate(() => {
             
@@ -105,10 +117,19 @@ function sleep(time) {
         })
 
         cardLists.push(gridData);
+        const loopEnd = Date.now();
+        loopsTimeTally += (loopEnd - loopStart);
 
     }
 
-    console.log(cardLists[0]);
+    const botEnd = Date.now();
+
+    console.log(tableData.headers);
+    console.log(tableData.data[4]);
+    console.log(cardLists[4]);
+    console.log(`Mean time to process a decklist: ${loopsTimeTally/deckNumber} ms`);
+    console.log(`Total process time : ${botEnd - botStart} ms`);
+
     
     // TODO : go to next page X times
 
