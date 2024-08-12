@@ -1,6 +1,5 @@
-import { writeFileSync } from 'fs';
-
 const puppeteer = require('puppeteer');
+const fs = require('fs');
 
 const commanderName = "ghave-guru-of-spores";
 let botTimeTally = 0;
@@ -23,7 +22,7 @@ function sleep(time) {
  * @param {string} filename : the name we want to save this in
  */
 const JSONToFile = (obj, filename) => {
-    writeFileSync(`${filename}.json`, JSON.stringify(obj, null, 2));
+    fs.writeFileSync(`${filename}.json`, JSON.stringify(obj, null, 2));
 }
 
 /**
@@ -38,6 +37,8 @@ async function processing(numberOfNext) {
     const browser = await puppeteer.launch({
         headless: true,
     });
+
+    console.log("OPENED BROWSER");
 
     const page = await browser.newPage();
     page.setViewport({
@@ -136,18 +137,35 @@ async function processing(numberOfNext) {
 
     const botEnd = Date.now();
 
-    console.log(tableData.headers);
-    console.log(tableData.data[4]);
-    console.log(cardLists[4]);
+    //console.log(tableData.headers);
+    //console.log(tableData.data[4]);
+    //console.log(cardLists[4]);
     console.log(`Mean time to process a decklist: ${loopsTimeTally/deckNumber} ms`);
     console.log(`Total process time : ${botEnd - botStart} ms`);
 
     // TODO : go to next page X times by going back to decks and clicking on the Next button
 
 
-    // TODO : save in json format
+    // Save in json format, as a file name after the commander name
+    var collection = {
+        decklists : []
+    };
+
+    for (index in tableData.data) {
+        collection.decklists.push({
+            list : cardLists[index],
+            creatureNumber : parseInt(tableData.data[index][5]),
+            instantNumber : parseInt(tableData.data[index][6]),
+            sorceryNumber : parseInt(tableData.data[index][7]),
+            artifactNumber : parseInt(tableData.data[index][8]),
+            enchantNumber : parseInt(tableData.data[index][9]),
+            planeswalkerNumber : parseInt(tableData.data[index][10]),
+        })
+    }
 
     await browser.close();
+
+    JSONToFile(collection, commanderName);
 };
 
 processing(0);
