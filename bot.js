@@ -27,7 +27,27 @@ const JSONToFile = (obj, filename) => {
  * Processing function of the bot. Will fetch the data of decks for the wanted commander, for future "analysis"
  * @param {int} numberOfNext : the number of time the "Next" button will be clicked on (aka the total number of decks seen will be 10 * numberOfNext)
  */
-async function processing(numberOfNext) {
+async function processing(numberOfDecksOnPage) {
+
+    const numberDict = {
+        10: "xpath=/html/body/div/main/div[1]/div[3]/div/div/div[1]/div/button[1]",
+        25: "xpath=/html/body/div/main/div[1]/div[3]/div/div/div[1]/div/button[2]",
+        50: "xpath=/html/body/div/main/div[1]/div[3]/div/div/div[1]/div/button[3]",
+        100: "xpath=/html/body/div/main/div[1]/div[3]/div/div/div[1]/div/button[4]"
+    }
+
+    var keys = Object.keys(numberDict);
+
+
+    console.log(keys);
+    console.log(numberOfDecksOnPage);
+
+    if ( !(keys.includes(numberOfDecksOnPage.toString(), 0))) {
+        console.log(`Wrong number of decks. Must be a number in ${[10, 25, 50, 100]}. Remember to change the parameter of the function at the bottom of the code !`);
+        return
+    } else {
+        console.log(`Searching for the first ${numberOfDecksOnPage} decks for the commander !`);
+    }
     
     const botStart = Date.now();
     let cardLists = [];
@@ -48,9 +68,15 @@ async function processing(numberOfNext) {
         waitUntil: ['networkidle2', 'load']
     });
 
+    
+
 
     //Clicking on the cookies button
     await page.click("xpath=/html/body/div[2]/div/div[2]/div[3]/div/div[2]");
+
+    await page.click(numberDict[numberOfDecksOnPage.toString()]);
+
+
     await page.waitForSelector('table');
 
     /**
@@ -176,4 +202,4 @@ async function processing(numberOfNext) {
     
 };
 
-processing(1);
+processing(25);
