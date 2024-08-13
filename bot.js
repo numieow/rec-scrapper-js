@@ -169,7 +169,7 @@ async function processing(numberOfNext) {
         })
     };
 
-    //JSONToFile(collection, commanderName);
+    JSONToFile(collection, commanderName);
 
     await browser.close();
 
