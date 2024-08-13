@@ -2,10 +2,8 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 
 const commanderName = "ghave-guru-of-spores";
-let botTimeTally = 0;
 let deckNumber = 0;
 let loopsTimeTally = 0;
-const nextButtonXPath = "/html/body/div/main/div[1]/div[3]/div/div/div[3]/ul/li[7]/a";
 
 /**
  * Makes the program halt for time ms (mostly for testing purposes)
@@ -35,7 +33,7 @@ async function processing(numberOfNext) {
     let cardLists = [];
 
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
     });
 
     console.log("OPENED BROWSER");
@@ -47,14 +45,12 @@ async function processing(numberOfNext) {
     })
 
     await page.goto('https://edhrec.com/decks/' + commanderName, {
-        waitUntil: 'networkidle2'
+        waitUntil: ['networkidle2', 'load']
     });
 
 
     //Clicking on the cookies button
     await page.click("xpath=/html/body/div[2]/div/div[2]/div[3]/div/div[2]");
-
-
     await page.waitForSelector('table');
 
     /**
@@ -65,12 +61,14 @@ async function processing(numberOfNext) {
      */
     const tableData = await page.evaluate(() => {
 
-        const table = document.querySelector('table');
-        const rows = table.querySelectorAll('tr');
+        var links = [];
         
-        const headers = Array.from(rows[0].querySelectorAll('th')).map(th => th.textContent.trim());
+        var table = document.querySelector('table');
+        var rows = table.querySelectorAll('tr');
 
-        const data = Array.from(rows).slice(1).map(row => {
+        const headers = Array.from(rows[0].querySelectorAll('th')).map(th => th.textContent.trim());
+        
+        data = Array.from(rows).slice(1).map(row => {
             const cells = row.querySelectorAll('td');
             return Array.from(cells).map(cell => {
                 if (cell.firstChild && cell.firstChild.href) {
@@ -80,14 +78,22 @@ async function processing(numberOfNext) {
                 }
             });
         })
+        
+        links = Array.from(data).map(ele => {
+            return ele[0]
+        });
 
         return {
             headers,
-            data
+            data, 
+            links
         };
-
     });
 
+        
+    console.log(tableData.links);
+
+    
     // Goes through every deck in the home page and retrieves the decklist
     for (index in tableData.data) {
 
@@ -140,12 +146,12 @@ async function processing(numberOfNext) {
     //console.log(tableData.headers);
     //console.log(tableData.data[4]);
     //console.log(cardLists[4]);
-    console.log(`Mean time to process a decklist: ${loopsTimeTally/deckNumber} ms`);
+    console.log(`Mean time to process a decklist: ${loopsTimeTally === 0 ? 0 : loopsTimeTally/deckNumber} ms`);
     console.log(`Total process time : ${botEnd - botStart} ms`);
 
     // TODO : go to next page X times by going back to decks and clicking on the Next button
 
-
+    
     // Save in json format, as a file name after the commander name
     var collection = {
         decklists : []
@@ -161,11 +167,13 @@ async function processing(numberOfNext) {
             enchantNumber : parseInt(tableData.data[index][9]),
             planeswalkerNumber : parseInt(tableData.data[index][10]),
         })
-    }
+    };
+
+    //JSONToFile(collection, commanderName);
 
     await browser.close();
 
-    JSONToFile(collection, commanderName);
+    
 };
 
-processing(0);
+processing(1);
